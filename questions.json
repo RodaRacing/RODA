@@ -1,0 +1,29 @@
+[
+  {
+    "question": "¿Cuál es la función principal de la correa de distribución?",
+    "options": [
+      "Evitar que el motor se sobrecaliente",
+      "Sincronizar la rotación del cigüeñal y el árbol de levas",
+      "Lubricar los pistones"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "¿Qué herramienta se utiliza para medir la presión de inflado de un neumático?",
+    "options": [
+      "Dinámetro",
+      "Calibre",
+      "Manómetro"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "¿Qué elemento del sistema de frenos se encarga de multiplicar la fuerza ejercida por el conductor?",
+    "options": [
+      "El servofreno",
+      "El cilindro maestro",
+      "La pinza de freno"
+    ],
+    "answer": 0
+  }
+]

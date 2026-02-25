@@ -1,0 +1,9 @@
+(kicad_sch
+	(version 20231120)
+	(generator "GPT-5.2-Codex")
+	(uuid "8f458702-a55e-4a24-af3f-2f61a7114b0b")
+	(paper "A4")
+	(title_block
+		(title "ESP32 Gear Sensor + N-Light")
+	)
+)

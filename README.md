@@ -28,29 +28,32 @@ npm run build
 - `CONTACT_EMAIL`: correo para enlace `mailto:`.
 - `LOGO_PATH`: ruta del logo (por defecto `/roda-logo.svg`).
 
-## Nuevo: Chat IA normativa ITV
+## Chat IA normativa ITV (funcionando con PDFs)
 
-Se añadió un apartado de chat en la landing (`#chat-itv`) que ofrece respuestas orientativas sobre si una actuación puede considerarse reforma, consultando una base normativa estructurada basada en:
+El apartado `#chat-itv` ahora permite **subir PDFs reales** y consultar su contenido en el navegador.
 
-- Manual de Reformas de Vehículos.
-- Procedimiento de Inspección de Estaciones ITV.
+### Cómo usarlo
 
-Archivos clave:
+1. Entra al bloque “Chat ITV IA” de la landing.
+2. Pulsa **Subir PDFs** y selecciona:
+   - Manual de Reformas de Vehículos (PDF).
+   - Procedimiento de Inspección de Estaciones ITV (PDF).
+3. Haz tu pregunta (ejemplo: “¿Cambiar el escape se considera reforma?”).
+4. El chat devolverá:
+   - veredicto orientativo,
+   - coincidencias en base resumida oficial,
+   - coincidencias encontradas en tus PDFs (con referencia de página).
 
-- `src/components/ITVChat.tsx`: interfaz del chat + lógica de respuesta.
-- `src/data/itvKnowledge.ts`: base de conocimiento normativa y enlaces oficiales.
+### Dónde subir los PDFs
 
-> Importante: el chat es orientativo y no sustituye la validación oficial en ITV para el caso concreto.
+No necesitas subirlos al servidor: se cargan desde el propio chat y se procesan localmente en el navegador.
 
-## Logo incluido
+## Archivos clave del chat ITV
 
-- Se agregó `public/roda-logo.svg` y ya está integrado en navbar + footer.
-- Si quieres usar tu archivo original en PNG/JPG, súbelo a `public/` y cambia `LOGO_PATH`.
+- `src/components/ITVChat.tsx`: interfaz del chat, carga de PDF y lógica de búsqueda.
+- `src/data/itvKnowledge.ts`: base normativa resumida + fuentes oficiales.
 
-## Cómo reemplazar fotos reales de proyectos
-
-- En la sección `projects` de `src/App.tsx` ya tienes 6 bloques listos.
-- Cambia los placeholders por `<img src="..." />` cuando tengas fotos finales.
+> Importante: el chat es orientativo y no sustituye la validación oficial en ITV para un caso concreto.
 
 ## Estructura principal
 

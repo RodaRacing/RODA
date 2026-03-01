@@ -6,6 +6,15 @@ export type KnowledgeChunk = {
   hintKeywords: string[]
 }
 
+export type DocumentChunk = {
+  id: string
+  source: string
+  topic: string
+  text: string
+  hintKeywords: string[]
+  page?: number
+}
+
 export const ITV_SOURCES = {
   manualReformasLabel: 'Manual de Reformas de Vehículos (MinCOTUR)',
   manualReformasUrl:

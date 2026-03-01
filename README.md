@@ -28,6 +28,20 @@ npm run build
 - `CONTACT_EMAIL`: correo para enlace `mailto:`.
 - `LOGO_PATH`: ruta del logo (por defecto `/roda-logo.svg`).
 
+## Nuevo: Chat IA normativa ITV
+
+Se añadió un apartado de chat en la landing (`#chat-itv`) que ofrece respuestas orientativas sobre si una actuación puede considerarse reforma, consultando una base normativa estructurada basada en:
+
+- Manual de Reformas de Vehículos.
+- Procedimiento de Inspección de Estaciones ITV.
+
+Archivos clave:
+
+- `src/components/ITVChat.tsx`: interfaz del chat + lógica de respuesta.
+- `src/data/itvKnowledge.ts`: base de conocimiento normativa y enlaces oficiales.
+
+> Importante: el chat es orientativo y no sustituye la validación oficial en ITV para el caso concreto.
+
 ## Logo incluido
 
 - Se agregó `public/roda-logo.svg` y ya está integrado en navbar + footer.
@@ -41,6 +55,8 @@ npm run build
 ## Estructura principal
 
 - `src/App.tsx`: landing one-page completa.
+- `src/components/ITVChat.tsx`: chat IA normativa ITV.
+- `src/data/itvKnowledge.ts`: fuentes y base de conocimiento normativa.
 - `src/index.css`: Tailwind + estilos base (incluye scroll suave en anclas).
 - `tailwind.config.js`: configuración Tailwind.
 - `postcss.config.js`: integración Tailwind/PostCSS.

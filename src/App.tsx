@@ -1,3 +1,4 @@
+import { ITVChat } from './components/ITVChat'
 const WHATSAPP_URL =
   'https://wa.me/34600000000?text=Hola%20Roda%20Racing%2C%20quiero%20informaci%C3%B3n%20sobre%20una%20preparaci%C3%B3n%20de%20moto.'
 const CONTACT_EMAIL = 'hola@rodaracing.com'
@@ -8,6 +9,7 @@ const navItems = [
   { label: 'Proceso', href: '#proceso' },
   { label: 'Proyectos', href: '#proyectos' },
   { label: 'FAQ', href: '#faq' },
+  { label: 'Chat ITV IA', href: '#chat-itv' },
   { label: 'Contacto', href: '#contacto' },
 ]
 
@@ -308,6 +310,8 @@ function App() {
             </div>
           </div>
         </section>
+
+        <ITVChat />
 
         <section id="contacto" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-red-500/30 bg-gradient-to-br from-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-black/30">

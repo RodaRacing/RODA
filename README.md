@@ -8,13 +8,19 @@ Landing one-page para captar clientes de **preparación de motos** con CTA a Wha
 - Vite
 - TypeScript
 - Tailwind CSS
+- Node + Express (API ITV para base documental compartida)
 
-## Ejecutar
+## Ejecutar (web + API)
 
 ```bash
 npm install
 npm run dev
 ```
+
+Esto levanta:
+
+- Frontend Vite en `http://localhost:5173`
+- API ITV en `http://localhost:8787`
 
 ## Build de producción
 
@@ -28,44 +34,33 @@ npm run build
 - `CONTACT_EMAIL`: correo para enlace `mailto:`.
 - `LOGO_PATH`: ruta del logo (por defecto `/roda-logo.svg`).
 
-## Chat IA normativa ITV (funcionando con PDFs)
+## Chat IA normativa ITV (con base persistida para todos los usuarios)
 
-El apartado `#chat-itv` ahora permite **subir PDFs reales** y consultar su contenido en el navegador.
+El chat `#chat-itv` ya no depende de subir PDFs en cada sesión:
 
-### Cómo usarlo
+- Los PDFs se suben una vez al backend.
+- Se procesan y trocean.
+- Se guardan en una base persistida en `server/data/itv-db.json`.
+- Cualquier usuario consulta la misma base documental.
 
-1. Entra al bloque “Chat ITV IA” de la landing.
-2. Pulsa **Subir PDFs** y selecciona:
-   - Manual de Reformas de Vehículos (PDF).
-   - Procedimiento de Inspección de Estaciones ITV (PDF).
-3. Haz tu pregunta (ejemplo: “¿Cambiar el escape se considera reforma?”).
-4. El chat devolverá:
-   - veredicto orientativo,
-   - coincidencias en base resumida oficial,
-   - coincidencias encontradas en tus PDFs (con referencia de página).
+### Endpoints API
 
-### Dónde subir los PDFs
-
-No necesitas subirlos al servidor: se cargan desde el propio chat y se procesan localmente en el navegador.
-
-## Archivos clave del chat ITV
-
-- `src/components/ITVChat.tsx`: interfaz del chat, carga de PDF y lógica de búsqueda.
-- `src/data/itvKnowledge.ts`: base normativa resumida + fuentes oficiales.
-
-> Importante: el chat es orientativo y no sustituye la validación oficial en ITV para un caso concreto.
+- `GET /api/itv/docs` → estado de documentos cargados.
+- `POST /api/itv/upload` → subir PDFs (campo multipart: `pdfs`).
+- `POST /api/itv/ask` → preguntar al asistente sobre reforma/no reforma.
 
 ## Estructura principal
 
 - `src/App.tsx`: landing one-page completa.
-- `src/components/ITVChat.tsx`: chat IA normativa ITV.
-- `src/data/itvKnowledge.ts`: fuentes y base de conocimiento normativa.
-- `src/index.css`: Tailwind + estilos base (incluye scroll suave en anclas).
-- `tailwind.config.js`: configuración Tailwind.
-- `postcss.config.js`: integración Tailwind/PostCSS.
+- `src/components/ITVChat.tsx`: chat conectado a API compartida.
+- `src/data/itvKnowledge.ts`: base normativa resumida + fuentes oficiales.
+- `server/index.js`: API Express para carga/consulta de PDFs.
+- `server/itvDb.js`: persistencia JSON de la base documental.
+- `server/data/itv-db.json`: “base de datos” persistida (se crea automáticamente).
 
 ## Notas
 
+- El chat ofrece respuestas orientativas; no sustituye validación oficial ITV.
 - Diseño responsive mobile-first.
 - Estética oscuro/grafito con acentos rojos racing.
 - Sin UI kits pesados.

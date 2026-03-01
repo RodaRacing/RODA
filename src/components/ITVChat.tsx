@@ -1,198 +1,147 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import {
-  ITV_SOURCES,
-  itvKnowledgeBase,
-  quickClassifiers,
-  type DocumentChunk
-} from '../data/itvKnowledge'
+import { ITV_SOURCES, quickClassifiers } from '../data/itvKnowledge'
 
 type ChatMessage = {
   role: 'user' | 'assistant'
   text: string
 }
 
-type ParsedDoc = {
-  fileName: string
-  chunks: DocumentChunk[]
+type DocsInfo = {
+  documents: Array<{ id: string; fileName: string; uploadedAt: string; chunks: number }>
+  chunks: number
+  updatedAt: string | null
 }
 
-function normalize(text: string) {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+type AskResponse = {
+  verdict: string
+  officialEvidence: string[]
+  pdfEvidence: string[]
+  docsLoaded: number
+  updatedAt: string | null
+  disclaimer: string
 }
 
-function scoreChunk(question: string, chunkText: string, keywords: string[]) {
-  const q = normalize(question)
-  const text = normalize(chunkText)
-  let score = 0
+function formatAnswer(response: AskResponse) {
+  return `${response.verdict}
 
-  for (const keyword of keywords) {
-    const key = normalize(keyword)
-    if (q.includes(key)) score += 2
-    if (text.includes(key)) score += 1
-  }
+Base oficial resumida:
+${response.officialEvidence.map((x) => `- ${x}`).join('\n')}
 
-  const tokens = q.split(/\W+/).filter((t) => t.length > 3)
-  for (const token of tokens) {
-    if (text.includes(token)) score += 0.4
-  }
+Coincidencias en base documental compartida:
+${response.pdfEvidence.map((x) => `- ${x}`).join('\n')}
 
-  return score
-}
+Documentos cargados en la base: ${response.docsLoaded}
+Última actualización: ${response.updatedAt ?? 'N/D'}
 
-async function parsePdfFile(file: File) {
-  const pdfjsLib = await import('pdfjs-dist')
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
-
-  const raw = await file.arrayBuffer()
-  const pdf = await pdfjsLib.getDocument({ data: raw }).promise
-
-  const chunks: DocumentChunk[] = []
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber)
-    const content = await page.getTextContent()
-    const pageText = content.items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    if (!pageText) continue
-
-    const split = pageText.match(/.{1,1200}(\s|$)/g) ?? [pageText]
-    split.forEach((part, index) => {
-      const clean = part.trim()
-      if (!clean) return
-      chunks.push({
-        id: `${file.name}-p${pageNumber}-${index + 1}`,
-        source: file.name,
-        topic: `Página ${pageNumber}`,
-        text: clean,
-        hintKeywords: [],
-        page: pageNumber,
-      })
-    })
-  }
-
-  return chunks
-}
-
-function buildAnswer(question: string, parsedDocs: ParsedDoc[]) {
-  const pdfChunks = parsedDocs.flatMap((doc) => doc.chunks)
-
-  const rankedOfficial = itvKnowledgeBase
-    .map((chunk) => ({ chunk, score: scoreChunk(question, chunk.text, chunk.hintKeywords) }))
-    .sort((a, b) => b.score - a.score)
-
-  const rankedPdf = pdfChunks
-    .map((chunk) => ({ chunk, score: scoreChunk(question, chunk.text, []) }))
-    .sort((a, b) => b.score - a.score)
-
-  const officialHits = rankedOfficial.filter((r) => r.score > 0).slice(0, 2)
-  const pdfHits = rankedPdf.filter((r) => r.score > 0.5).slice(0, 3)
-
-  const reformSignals = ['escape', 'faro', 'intermitente', 'suspension', 'freno', 'chasis', 'estructura', 'led']
-  const likelyReform = reformSignals.some((token) => normalize(question).includes(token))
-
-  const verdict = likelyReform
-    ? 'Con la información aportada, **podría considerarse reforma** y requerir legalización/documentación específica.'
-    : 'Con la información aportada, **podría no ser reforma** si el componente es equivalente y homologado para ese vehículo.'
-
-  const officialEvidence = officialHits.length
-    ? officialHits
-        .map((item) => `- **${item.chunk.source} · ${item.chunk.topic}:** ${item.chunk.text}`)
-        .join('\n')
-    : '- No encontré coincidencias claras en la base resumida oficial.'
-
-  const pdfEvidence = pdfHits.length
-    ? pdfHits
-        .map((item) => `- **${item.chunk.source} (pág. ${item.chunk.page ?? '?'})**: ${item.chunk.text.slice(0, 260)}...`)
-        .join('\n')
-    : '- Sin coincidencias en los PDFs cargados. Sube el Manual de Reformas y el Procedimiento ITV para mejorar precisión.'
-
-  const reminder =
-    '⚠️ Respuesta orientativa. Para confirmación definitiva hay que validar el código de reforma aplicable y la documentación exacta en ITV.'
-
-  return `${verdict}\n\n**Base normativa oficial resumida:**\n${officialEvidence}\n\n**Coincidencias en tus PDFs:**\n${pdfEvidence}\n\n${reminder}`
+⚠️ ${response.disclaimer}`
 }
 
 export function ITVChat() {
   const [question, setQuestion] = useState('')
-  const [loadingPdf, setLoadingPdf] = useState(false)
-  const [parsedDocs, setParsedDocs] = useState<ParsedDoc[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      text: 'Soy el asistente IA de normativa ITV. Sube tus PDFs (Manual de Reformas y Procedimiento ITV) y pregúntame: “¿cambiar el escape de mi moto es reforma?”.',
+      text: 'Asistente ITV listo. Esta versión consulta una base documental compartida (persistida en servidor).',
     },
   ])
+  const [docsInfo, setDocsInfo] = useState<DocsInfo | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const canSend = question.trim().length > 5
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const refreshDocsInfo = async () => {
+    const response = await fetch('/api/itv/docs')
+    if (!response.ok) return
+    const data: DocsInfo = await response.json()
+    setDocsInfo(data)
+  }
+
+  useEffect(() => {
+    refreshDocsInfo().catch(() => undefined)
+  }, [])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!canSend) return
+    if (!canSend || loading) return
 
     const userMessage = question.trim()
-    const answer = buildAnswer(userMessage, parsedDocs)
-
-    setMessages((current) => [
-      ...current,
-      { role: 'user', text: userMessage },
-      { role: 'assistant', text: answer },
-    ])
-
+    setMessages((current) => [...current, { role: 'user', text: userMessage }])
     setQuestion('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/itv/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: userMessage }),
+      })
+
+      if (!response.ok) throw new Error('No se pudo consultar la base ITV.')
+      const data: AskResponse = await response.json()
+
+      setMessages((current) => [...current, { role: 'assistant', text: formatAnswer(data) }])
+      refreshDocsInfo().catch(() => undefined)
+    } catch {
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          text: 'No he podido consultar la base documental en servidor. Verifica que la API esté levantada.',
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handlePdfUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? [])
     if (!files.length) return
 
-    setLoadingPdf(true)
+    setUploading(true)
 
     try {
-      const parsed = await Promise.all(
-        files
-          .filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))
-          .map(async (file) => ({ fileName: file.name, chunks: await parsePdfFile(file) })),
-      )
+      const formData = new FormData()
+      files.forEach((file) => formData.append('pdfs', file))
 
-      setParsedDocs((current) => {
-        const noDup = current.filter((doc) => !parsed.some((incoming) => incoming.fileName === doc.fileName))
-        return [...noDup, ...parsed]
+      const response = await fetch('/api/itv/upload', {
+        method: 'POST',
+        body: formData,
       })
+
+      if (!response.ok) throw new Error('Error subiendo PDFs')
+      const data = await response.json()
 
       setMessages((current) => [
         ...current,
         {
           role: 'assistant',
-          text: `PDFs cargados correctamente: ${parsed.map((d) => `${d.fileName} (${d.chunks.length} fragmentos)`).join(', ')}.`,
+          text: `Base documental actualizada: +${data.addedDocs} documento(s). Total: ${data.totalDocs} documentos y ${data.totalChunks} fragmentos.`,
         },
       ])
+
+      refreshDocsInfo().catch(() => undefined)
     } catch {
       setMessages((current) => [
         ...current,
         {
           role: 'assistant',
-          text: 'No pude procesar alguno de los PDFs. Revisa que estén bien descargados y vuelve a intentarlo.',
+          text: 'No se pudieron subir/procesar los PDFs en el servidor.',
         },
       ])
     } finally {
-      setLoadingPdf(false)
+      setUploading(false)
       event.target.value = ''
     }
   }
 
   const examples = useMemo(
     () => [
-      '¿Si cambio intermitentes LED en mi moto es reforma?',
-      '¿Poner un escape aftermarket requiere homologación?',
-      '¿Cambiar medida de neumáticos pasa ITV sin reforma?',
+      '¿Cambiar intermitentes LED en mi moto es reforma?',
+      '¿Un escape aftermarket sin homologación pasa ITV?',
+      '¿Un neumático equivalente requiere reforma?',
     ],
     [],
   )
@@ -200,32 +149,26 @@ export function ITVChat() {
   return (
     <section id="chat-itv" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="rounded-3xl border border-white/10 bg-zinc-900/60 p-6 sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="inline-flex rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300">
-              Nuevo · Asistente IA Normativa ITV
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold">¿Es reforma o no? Consulta normativa al instante</h2>
-            <p className="mt-3 max-w-3xl text-zinc-300">
-              Sube los PDFs oficiales y el chat buscará coincidencias directas en el contenido además de la base resumida del
-              <strong> Manual de Reformas de Vehículos</strong> y el <strong>Procedimiento de Inspección ITV</strong>.
-            </p>
-          </div>
-        </div>
+        <p className="inline-flex rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300">
+          Asistente IA Normativa ITV · Base compartida
+        </p>
+        <h2 className="mt-4 text-3xl font-semibold">Consulta reforma ITV sin re-subir PDFs cada vez</h2>
+
+        <p className="mt-3 max-w-3xl text-zinc-300">
+          Esta versión usa una base documental persistida en servidor. Una vez subidos los PDFs, cualquier usuario puede consultar.
+        </p>
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
-          <p className="text-sm text-zinc-300">Carga los PDFs que quieres consultar (se procesan localmente en tu navegador):</p>
+          <p className="text-sm text-zinc-300">Carga/actualiza PDFs en la base compartida:</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <label className="cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-sm text-zinc-200 transition hover:border-red-500/50">
-              Subir PDFs
+              {uploading ? 'Subiendo...' : 'Subir PDFs a la base'}
               <input type="file" multiple accept=".pdf,application/pdf" className="hidden" onChange={handlePdfUpload} />
             </label>
             <span className="text-xs text-zinc-400">
-              {loadingPdf
-                ? 'Procesando PDFs...'
-                : parsedDocs.length
-                  ? `${parsedDocs.length} documento(s) cargado(s)`
-                  : 'Aún no has cargado documentos'}
+              {docsInfo
+                ? `${docsInfo.documents.length} doc(s), ${docsInfo.chunks} fragmentos · Última actualización: ${docsInfo.updatedAt ?? 'N/D'}`
+                : 'Sin información de base documental'}
             </span>
           </div>
         </div>
@@ -275,10 +218,10 @@ export function ITVChat() {
               </div>
               <button
                 type="submit"
-                disabled={!canSend}
+                disabled={!canSend || loading}
                 className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Consultar IA
+                {loading ? 'Consultando...' : 'Consultar IA'}
               </button>
             </form>
           </div>

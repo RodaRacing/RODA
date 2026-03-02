@@ -55,6 +55,11 @@ Para verlo (solo administración):
 
 Para ocultarlo de nuevo: `localStorage.removeItem('itvAdminMode')`.
 
+También puedes activar desde la interfaz con el botón **Acceso administración** dentro del chat.
+
+- Clave por defecto: `roda-admin`
+- Clave configurable por entorno: `VITE_ITV_ADMIN_KEY`
+
 ### Endpoints API
 
 - `GET /api/itv/docs` → estado de documentos cargados.

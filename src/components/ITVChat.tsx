@@ -142,6 +142,37 @@ export function ITVChat() {
     }
   }
 
+
+  const handleEnableAdmin = () => {
+    const secret = window.prompt('Introduce clave de administración para gestionar PDFs:')
+    if (!secret) return
+
+    const expected = (import.meta.env.VITE_ITV_ADMIN_KEY as string | undefined) ?? 'roda-admin'
+    if (secret !== expected) {
+      setMessages((current) => [
+        ...current,
+        { role: 'assistant', text: 'Clave de administración incorrecta.' },
+      ])
+      return
+    }
+
+    window.localStorage.setItem('itvAdminMode', '1')
+    setIsAdminMode(true)
+    setMessages((current) => [
+      ...current,
+      { role: 'assistant', text: 'Modo administrador activado. Ya puedes subir PDFs a la base compartida.' },
+    ])
+  }
+
+  const handleDisableAdmin = () => {
+    window.localStorage.removeItem('itvAdminMode')
+    setIsAdminMode(false)
+    setMessages((current) => [
+      ...current,
+      { role: 'assistant', text: 'Modo administrador desactivado.' },
+    ])
+  }
+
   const examples = useMemo(
     () => [
       '¿Cambiar intermitentes LED en mi moto es reforma?',
@@ -171,6 +202,13 @@ export function ITVChat() {
                 {uploading ? 'Subiendo...' : 'Subir PDFs a la base'}
                 <input type="file" multiple accept=".pdf,application/pdf" className="hidden" onChange={handlePdfUpload} />
               </label>
+              <button
+                type="button"
+                onClick={handleDisableAdmin}
+                className="rounded-lg border border-white/15 px-3 py-2 text-xs text-zinc-300 transition hover:border-red-500/50 hover:text-red-200"
+              >
+                Salir de modo admin
+              </button>
               <span className="text-xs text-zinc-400">
                 {docsInfo
                   ? `${docsInfo.documents.length} doc(s), ${docsInfo.chunks} fragmentos · Última actualización: ${docsInfo.updatedAt ?? 'N/D'}`
@@ -188,6 +226,13 @@ export function ITVChat() {
                 ? `${docsInfo.documents.length} doc(s), ${docsInfo.chunks} fragmentos disponibles · Actualización: ${docsInfo.updatedAt ?? 'N/D'}`
                 : 'Sin información de base documental'}
             </p>
+            <button
+              type="button"
+              onClick={handleEnableAdmin}
+              className="mt-3 rounded-lg border border-white/15 px-3 py-2 text-xs text-zinc-300 transition hover:border-red-500/50 hover:text-red-200"
+            >
+              Acceso administración
+            </button>
           </div>
         )}
 

@@ -34,6 +34,15 @@ npm run build
 - `CONTACT_EMAIL`: correo para enlace `mailto:`.
 - `LOGO_PATH`: ruta del logo (por defecto `/roda-logo.svg`).
 
+
+## Segmento Trail/Touring Premium
+
+Se añadió una sección específica con recomendaciones para motos trail y touring premium:
+
+- enfoque por packs (Protection PRO, Touring Premium, Navigation & Utility),
+- criterios de configuración por uso real,
+- benchmark de patrones de mercado (catálogo por modelo, modularidad, confort/aerodinámica).
+
 ## Chat IA normativa ITV (con base persistida para todos los usuarios)
 
 El chat `#chat-itv` ya no depende de subir PDFs en cada sesión:

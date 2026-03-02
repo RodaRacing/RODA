@@ -8,6 +8,7 @@ const navItems = [
   { label: 'Servicios', href: '#servicios' },
   { label: 'Proceso', href: '#proceso' },
   { label: 'Proyectos', href: '#proyectos' },
+  { label: 'Trail/Touring', href: '#segmento-trail' },
   { label: 'FAQ', href: '#faq' },
   { label: 'Chat ITV IA', href: '#chat-itv' },
   { label: 'Contacto', href: '#contacto' },
@@ -109,6 +110,41 @@ const projects = [
     title: 'Touring Long Route Pack',
     desc: 'Configuración pensada para kilómetros: confort funcional, orden visual y robustez de uso real.',
     tags: ['Touring', 'Comfort', 'Reliability'],
+  },
+]
+
+
+
+const trailBrands = [
+  {
+    name: 'Wunderlich-style approach',
+    focus: 'Catálogo por modelo, ergonomía y confort para gran turismo premium.',
+  },
+  {
+    name: 'SW-MOTECH-style approach',
+    focus: 'Sistema modular: protección, equipaje y navegación con lógica adventure.',
+  },
+  {
+    name: 'Isotta-style approach',
+    focus: 'Cúpulas y protección aerodinámica con fuerte enfoque en touring y acabados.',
+  },
+]
+
+const trailRecommendations = [
+  {
+    pack: 'Pack Protection PRO',
+    desc: 'Recomendado para uso mixto asfalto/pista en trail media-alta cilindrada.',
+    items: ['Defensas motor + cárter', 'Protección radiador/faro', 'Handguards reforzados'],
+  },
+  {
+    pack: 'Pack Touring Premium',
+    desc: 'Pensado para viajes largos priorizando confort, capacidad y fatiga reducida.',
+    items: ['Pantalla/cúpula optimizada', 'Sistema maletas + soportes', 'Asiento y postura de larga distancia'],
+  },
+  {
+    pack: 'Pack Navigation & Utility',
+    desc: 'Para usuarios que buscan control de ruta y funcionalidad diaria avanzada.',
+    items: ['Soporte GPS/roadbook antivibración', 'Tomas USB y gestión eléctrica', 'Iluminación auxiliar homologable'],
   },
 ]
 
@@ -294,6 +330,40 @@ function App() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+
+        <section id="segmento-trail" className="border-y border-white/10 bg-zinc-900/40">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-semibold">Recomendaciones Trail & Touring Premium</h2>
+            <p className="mt-3 max-w-3xl text-zinc-300">
+              Propuesta inspirada en patrones de marcas top del segmento adventure/touring: catálogo por modelo,
+              modularidad por packs y foco en protección + confort + navegación.
+            </p>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {trailBrands.map((brand) => (
+                <article key={brand.name} className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5">
+                  <h3 className="font-medium text-red-300">{brand.name}</h3>
+                  <p className="mt-2 text-sm text-zinc-300">{brand.focus}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-8 grid gap-5 lg:grid-cols-3">
+              {trailRecommendations.map((rec) => (
+                <article key={rec.pack} className="rounded-2xl border border-white/10 bg-zinc-900/60 p-6">
+                  <h3 className="text-lg font-medium">{rec.pack}</h3>
+                  <p className="mt-2 text-sm text-zinc-300">{rec.desc}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+                    {rec.items.map((item) => (
+                      <li key={item}>• {item}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 

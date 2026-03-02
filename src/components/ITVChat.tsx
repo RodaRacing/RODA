@@ -48,6 +48,7 @@ export function ITVChat() {
   const [docsInfo, setDocsInfo] = useState<DocsInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isAdminMode, setIsAdminMode] = useState(false)
 
   const canSend = question.trim().length > 5
 
@@ -60,6 +61,10 @@ export function ITVChat() {
 
   useEffect(() => {
     refreshDocsInfo().catch(() => undefined)
+
+    const byQuery = new URLSearchParams(window.location.search).get('admin') === '1'
+    const byStorage = window.localStorage.getItem('itvAdminMode') === '1'
+    setIsAdminMode(byQuery || byStorage)
   }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -158,20 +163,33 @@ export function ITVChat() {
           Esta versión usa una base documental persistida en servidor. Una vez subidos los PDFs, cualquier usuario puede consultar.
         </p>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
-          <p className="text-sm text-zinc-300">Carga/actualiza PDFs en la base compartida:</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <label className="cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-sm text-zinc-200 transition hover:border-red-500/50">
-              {uploading ? 'Subiendo...' : 'Subir PDFs a la base'}
-              <input type="file" multiple accept=".pdf,application/pdf" className="hidden" onChange={handlePdfUpload} />
-            </label>
-            <span className="text-xs text-zinc-400">
-              {docsInfo
-                ? `${docsInfo.documents.length} doc(s), ${docsInfo.chunks} fragmentos · Última actualización: ${docsInfo.updatedAt ?? 'N/D'}`
-                : 'Sin información de base documental'}
-            </span>
+        {isAdminMode ? (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+            <p className="text-sm text-zinc-300">Panel admin · carga/actualiza PDFs en la base compartida:</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <label className="cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-sm text-zinc-200 transition hover:border-red-500/50">
+                {uploading ? 'Subiendo...' : 'Subir PDFs a la base'}
+                <input type="file" multiple accept=".pdf,application/pdf" className="hidden" onChange={handlePdfUpload} />
+              </label>
+              <span className="text-xs text-zinc-400">
+                {docsInfo
+                  ? `${docsInfo.documents.length} doc(s), ${docsInfo.chunks} fragmentos · Última actualización: ${docsInfo.updatedAt ?? 'N/D'}`
+                  : 'Sin información de base documental'}
+              </span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+            <p className="text-sm text-zinc-300">
+              Base documental compartida cargada por el equipo técnico. Este panel de subida está oculto para usuarios.
+            </p>
+            <p className="mt-2 text-xs text-zinc-400">
+              {docsInfo
+                ? `${docsInfo.documents.length} doc(s), ${docsInfo.chunks} fragmentos disponibles · Actualización: ${docsInfo.updatedAt ?? 'N/D'}`
+                : 'Sin información de base documental'}
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4 sm:p-5">

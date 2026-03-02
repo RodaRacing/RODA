@@ -43,6 +43,18 @@ El chat `#chat-itv` ya no depende de subir PDFs en cada sesión:
 - Se guardan en una base persistida en `server/data/itv-db.json`.
 - Cualquier usuario consulta la misma base documental.
 
+
+### Modo administrador (subida de PDFs)
+
+El botón de subida ya no se muestra a usuarios normales.
+
+Para verlo (solo administración):
+
+- Añade `?admin=1` a la URL (ejemplo: `http://localhost:5173/?admin=1#chat-itv`), o
+- En consola del navegador: `localStorage.setItem('itvAdminMode','1')` y recarga.
+
+Para ocultarlo de nuevo: `localStorage.removeItem('itvAdminMode')`.
+
 ### Endpoints API
 
 - `GET /api/itv/docs` → estado de documentos cargados.
